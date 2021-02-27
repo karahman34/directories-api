@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class FolderResource extends JsonResource
+class WithSubFolderResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -21,8 +21,12 @@ class FolderResource extends JsonResource
             'name' => $this->name,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'files' => null,
-            'sub_folders' => null,
+            'files' => $this->files->map(function ($file) {
+                return new FileResource($file);
+            }),
+            'sub_folders' => $this->sub_folders->map(function ($sub_folder) {
+                return new FolderResource($sub_folder);
+            })
         ];
     }
 }

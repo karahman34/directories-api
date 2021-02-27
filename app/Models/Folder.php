@@ -36,4 +36,14 @@ class Folder extends Model
     {
         return $this->hasMany(File::class);
     }
+
+    /**
+     * Get sub folders.
+     *
+     * @return  HasMany
+     */
+    public function sub_folders()
+    {
+        return $this->hasMany(Folder::class, 'parent_folder_id');
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FolderResource;
+use App\Http\Resources\WithSubFolderResource;
 use App\Jobs\DeleteFolder;
 use App\Models\Folder;
 use Illuminate\Http\Request;
@@ -11,6 +12,48 @@ use Illuminate\Support\Facades\Auth;
 
 class FolderController extends Controller
 {
+    /**
+     * Get root folder.
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function getRootFolder()
+    {
+        try {
+            $storage = Auth::user()->storage()->select('id')->first();
+            $root = Folder::where('storage_id', $storage->id)
+                            ->whereNull('parent_folder_id')
+                            ->with('sub_folders', 'files')
+                            ->first();
+
+            return Transformer::success('Success to get root folder.', new WithSubFolderResource($root));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to get root folder.');
+        }
+    }
+
+    /**
+     * Get folder with the sub folders and files.
+     *
+     * @param   int|string  $folder_id
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function show($folder_id)
+    {
+        try {
+            $storage = Auth::user()->storage()->select('id')->first();
+            $folder = Folder::where('storage_id', $storage->id)
+                                ->where('id', $folder_id)
+                                ->with('sub_folders', 'files')
+                                ->first();
+
+            return Transformer::success('Success to get folder details.', new WithSubFolderResource($folder));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to get folder details.');
+        }
+    }
+
     /**
      * Check wheater the folder exist or not.
      *
