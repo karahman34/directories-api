@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\UserRegistered;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Helpers\Transformer;
@@ -71,6 +72,8 @@ class AuthController extends Controller
 
             $user = User::create($payload);
             $token = Auth::login($user);
+
+            event(new UserRegistered($user));
 
             return Transformer::success(
                 'Success to register user.',
