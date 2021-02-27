@@ -51,23 +51,26 @@ class FileController extends Controller
      */
     private function formatFileName($folder_id, string $file_name)
     {
-        $file_exist = File::select('name')
+        $file = File::selectRaw('SUBSTRING(name, -2, 1) + 1 AS next')
                                 ->where('folder_id', $folder_id)
                                 ->where(function ($query) use ($file_name) {
-                                    $query->whereRaw('SUBSTRING(name,1,CHAR_LENGTH(name) - 4) = ?', [$file_name])
-                                            ->orWhere('name', $file_name);
+                                    $query->where(function ($query2) use ($file_name) {
+                                        $query2->whereRaw('SUBSTRING(name, 1, CHAR_LENGTH(name) - 4) = ?', [$file_name])
+                                                ->whereRaw('SUBSTRING(name, -4) REGEXP "^ \\\\([0-9]+\\\\)$"');
+                                    })
+                                    ->orWhere('name', $file_name);
                                 })
                                 ->orderByDesc('created_at')
                                 ->limit(1)
                                 ->first();
 
-        if (!$file_exist) {
+        if (!$file) {
             return $file_name;
         }
 
-        $last = ((int) substr($file_exist->name, -2, 1)) + 1;
+        $next = (int) $file->next;
 
-        return "{$file_name} ({$last})";
+        return "{$file_name} ({$next})";
     }
 
     /**
