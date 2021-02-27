@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class DeleteFiles
@@ -24,7 +25,7 @@ class DeleteFiles
     /**
      * Containing The list File model.
      *
-     * @var App\Models\File
+     * @var Collection
      */
     public $files;
 
@@ -32,11 +33,11 @@ class DeleteFiles
      * Create a new job instance.
      *
      * @param  App\Models\Storage  $storage
-     * @param  array  $files
+     * @param  Collection  $files
      *
      * @return void
      */
-    public function __construct(ModelsStorage $storage, array $files)
+    public function __construct(ModelsStorage $storage, Collection $files)
     {
         $this->storage = $storage;
         $this->files = $files;
@@ -76,12 +77,12 @@ class DeleteFiles
         $size_decrease = 0;
         $deleted_files_id = [];
 
-        foreach ($this->files as $file) {
+        $this->files->each(function ($file) use (&$size_decrease, &$deleted_files_id) {
             if (Storage::exists($file->path) && Storage::delete($file->path)) {
                 $size_decrease += $file->size;
                 $deleted_files_id[] = $file->id;
             }
-        }
+        });
 
         $this->decreaseStorageSpace($size_decrease);
         $this->deleteFilesModel($deleted_files_id);

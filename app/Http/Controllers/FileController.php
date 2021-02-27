@@ -138,7 +138,7 @@ class FileController extends Controller
     {
         try {
             // Dispatch delete file job.
-            DeleteFiles::dispatch(Auth::user()->storage, [$file]);
+            DeleteFiles::dispatchSync(Auth::user()->storage, collect([$file]));
 
             return Transformer::success('Success to delete file.', $file);
         } catch (\Throwable $th) {
