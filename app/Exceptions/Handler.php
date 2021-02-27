@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Http\Helpers\Transformer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -36,6 +40,18 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            return Transformer::failed('Route not found.', null, 404);
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, $request) {
+            return Transformer::failed('Model not found.', null, 404);
+        });
+
+        $this->renderable(function (ValidationException $e, $request) {
+            return Transformer::failed('Validation Error.', $e->errors(), 422);
         });
     }
 }
