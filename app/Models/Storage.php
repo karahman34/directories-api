@@ -18,11 +18,11 @@ class Storage extends Model
     ];
 
     /**
-     * Default space in kilobytes.
+     * Default space in bytes.
      *
      * @var int
      */
-    public static $defaultSpace = 1048576;
+    public static $defaultSpace = 1073741824;
 
     /**
      * Get the storage owner.

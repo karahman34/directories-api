@@ -19,7 +19,7 @@ class CreateFilesTable extends Migration
             $table->string('path');
             $table->string('name');
             $table->string('extension');
-            $table->unsignedBigInteger('size');
+            $table->unsignedFloat('size', 20);
             $table->timestamps();
         });
     }

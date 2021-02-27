@@ -16,8 +16,8 @@ class CreateStoragesTable extends Migration
         Schema::create('storages', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->unsignedBigInteger('space');
-            $table->unsignedBigInteger('used_space');
+            $table->unsignedFloat('space', 20);
+            $table->unsignedFloat('used_space', 20);
             $table->timestamps();
         });
     }
