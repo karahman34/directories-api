@@ -7,7 +7,6 @@ use App\Http\Resources\FileResource;
 use App\Jobs\DeleteFiles;
 use App\Models\File;
 use App\Models\Folder;
-use App\Models\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,26 +15,26 @@ class FileController extends Controller
     /**
      * Get folder model.
      *
-     * @param   string|int  $storage_id
      * @param   string|int  $folder_id
      *
      * @return  Folder
      */
-    private function getFolder($storage_id, $folder_id)
+    private function getFolder($folder_id)
     {
-        return Folder::select('id')->where('id', $folder_id)->where('storage_id', $storage_id)->first();
+        return Folder::owned()->select('id')->where('id', $folder_id)->first();
     }
 
     /**
      * Check storage space.
      *
-     * @param   App\Models\Storage  $storage
      * @param   float  $size
      *
      * @return  bool
      */
-    private function checkStorageSpace(Storage $storage, float $size)
+    private function checkStorageSpace(float $size)
     {
+        $storage = Auth::user()->storage()->select('space', 'used_space')->first();
+
         return $storage->used_space + $size > $storage->space
             ? false
             : true;
@@ -88,10 +87,9 @@ class FileController extends Controller
         ]);
 
         try {
-            $storage = Auth::user()->storage;
             $folder_id = null;
             if ($request->has('folder_id')) {
-                $folder = $this->getFolder($storage->id, $request->input('folder_id'));
+                $folder = $this->getFolder($request->input('folder_id'));
 
                 if (!$folder) {
                     return Transformer::failed('Folder not found.', null, 404);
@@ -108,7 +106,7 @@ class FileController extends Controller
             $folder_upload = preg_replace('/[^a-zA-Z]+/', '_', Auth::user()->name);
 
             // Check storage space.
-            if (!$this->checkStorageSpace($storage, $file_size)) {
+            if (!$this->checkStorageSpace($file_size)) {
                 return Transformer::failed('Storage is already hit the limit.', null, 403);
             }
 

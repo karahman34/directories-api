@@ -20,8 +20,7 @@ class FolderController extends Controller
     public function getRootFolder()
     {
         try {
-            $storage = Auth::user()->storage()->select('id')->first();
-            $root = Folder::where('storage_id', $storage->id)
+            $root = Folder::owned()
                             ->whereNull('parent_folder_id')
                             ->with('sub_folders', 'files')
                             ->first();
@@ -42,8 +41,7 @@ class FolderController extends Controller
     public function show($folder_id)
     {
         try {
-            $storage = Auth::user()->storage()->select('id')->first();
-            $folder = Folder::where('storage_id', $storage->id)
+            $folder = Folder::owned()
                                 ->where('id', $folder_id)
                                 ->with('sub_folders', 'files')
                                 ->first();
@@ -78,10 +76,8 @@ class FolderController extends Controller
      */
     private function isParentFolderExist($parent_folder_id)
     {
-        $storage = Auth::user()->storage;
-
-        return Folder::where('id', $parent_folder_id)
-                        ->where('storage_id', $storage->id)
+        return Folder::owned()
+                        ->where('id', $parent_folder_id)
                         ->exists();
     }
 
