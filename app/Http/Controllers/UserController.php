@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FilesCollection;
+use App\Http\Resources\SearchResultsCollection;
 use App\Http\Resources\StorageResource;
+use App\Models\Folder;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +29,36 @@ class UserController extends Controller
         }
     }
 
+    /**
+     * Search folders & files.
+     *
+     * @param   Request  $request
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string'
+        ]);
+
+        try {
+            $q = $request->input('q');
+            $storage = Auth::user()->storage()->select('id')->first();
+            $folders = Folder::owned()->where('name', 'like', '%'.$q.'%')->get();
+            $files = DB::table('files')
+                        ->selectRaw('files.id, files.folder_id, files.name, path, files.size, extension, files.created_at, files.updated_at')
+                        ->join('folders', 'files.folder_id', 'folders.id')
+                        ->where('folders.storage_id', $storage->id)
+                        ->where('files.name', 'like', '%'.$q.'%')
+                        ->get();
+
+            return Transformer::success('Success to get search results.', new SearchResultsCollection($folders, $files));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to get search results.');
+        }
+    }
+    
     /**
      * Get recent upload files.
      *
