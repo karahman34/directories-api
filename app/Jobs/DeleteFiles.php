@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\File;
+use App\Models\Folder;
 use App\Models\Storage as ModelsStorage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -56,6 +57,27 @@ class DeleteFiles
     }
 
     /**
+     * Decrease folder size.
+     *
+     * @param   int|string  $folder_id
+     * @param   float  $size
+     *
+     * @return  void
+     */
+    private function decreaseFolderSize($folder_id, $size)
+    {
+        $folder = Folder::select('id', 'parent_folder_id', 'size')->where('id', $folder_id)->first();
+
+        if ($folder) {
+            $folder->decrement('size', $size);
+
+            if (!is_null($folder->parent_folder_id)) {
+                $this->decreaseFolderSize($folder->parent_folder_id, $size);
+            }
+        }
+    }
+
+    /**
      * Delete files model.
      *
      * @param   array  $deleted_files_id
@@ -81,6 +103,8 @@ class DeleteFiles
             if (Storage::exists($file->path) && Storage::delete($file->path)) {
                 $size_decrease += $file->size;
                 $deleted_files_id[] = $file->id;
+
+                $this->decreaseFolderSize($file->folder_id, $file->size);
             }
         });
 

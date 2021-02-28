@@ -19,6 +19,7 @@ class WithSubFolderResource extends JsonResource
             'storage_id' => $this->storage_id,
             'parent_folder_id' => $this->parent_folder_id,
             'name' => $this->name,
+            'size' => $this->size,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'files' => $this->files->map(function ($file) {

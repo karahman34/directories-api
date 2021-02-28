@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\FileCreated;
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FileResource;
 use App\Jobs\DeleteFiles;
@@ -73,6 +74,20 @@ class FileController extends Controller
     }
 
     /**
+     * Dispatching file event.
+     *
+     * @param  File  $file
+     *
+     * @return  void
+     */
+    private function dispatchFileEvent(File $file)
+    {
+        $storage = Auth()->user()->storage()->select('id')->first();
+
+        event(new FileCreated($file, $storage));
+    }
+
+    /**
      * Store and save file.
      *
      * @param   Illuminate\Http\Request  $request
@@ -119,8 +134,7 @@ class FileController extends Controller
                 'size' => $file_size,
             ]);
 
-            // Increase storage space.
-            Auth::user()->storage->increment('used_space', $file_size);
+            $this->dispatchFileEvent($file);
 
             return Transformer::success('Success to upload file.', new FileResource($file), 201);
         } catch (\Throwable $th) {

@@ -16,6 +16,7 @@ class Folder extends Model
         'storage_id',
         'parent_folder_id',
         'name',
+        'size',
     ];
 
     /**
