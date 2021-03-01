@@ -73,7 +73,7 @@ class UserController extends Controller
                             ->join('storages', 'folders.storage_id', 'storages.id')
                             ->where('folders.storage_id', Auth::id())
                             ->orderByDesc('files.created_at')
-                            ->limit(8)
+                            ->limit(16)
                             ->get();
 
             return Transformer::success('Success to get recent upload files.', new FilesCollection($files));
