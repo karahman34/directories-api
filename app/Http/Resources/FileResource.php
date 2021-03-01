@@ -22,6 +22,7 @@ class FileResource extends JsonResource
             'name' => $this->name,
             'size' => $this->size,
             'extension' => $this->extension,
+            'mime_type' => $this->mime_type,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

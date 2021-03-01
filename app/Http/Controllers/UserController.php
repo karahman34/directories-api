@@ -47,7 +47,7 @@ class UserController extends Controller
             $storage = Auth::user()->storage()->select('id')->first();
             $folders = Folder::owned()->where('name', 'like', '%'.$q.'%')->get();
             $files = DB::table('files')
-                        ->selectRaw('files.id, files.folder_id, files.name, path, files.size, extension, files.created_at, files.updated_at')
+                        ->selectRaw('files.id, files.folder_id, files.name, path, files.size, extension, mime_type, files.created_at, files.updated_at')
                         ->join('folders', 'files.folder_id', 'folders.id')
                         ->where('folders.storage_id', $storage->id)
                         ->where('files.name', 'like', '%'.$q.'%')

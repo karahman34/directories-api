@@ -118,6 +118,7 @@ class FileController extends Controller
             $file_name = $this->formatFileName($folder_id, pathinfo($file_upload->getClientOriginalName(), PATHINFO_FILENAME));
             $file_extension = $file_upload->getClientOriginalExtension();
             $file_size = $file_upload->getSize();
+            $file_mime_type = $file_upload->getMimeType();
             $folder_upload = preg_replace('/[^a-zA-Z]+/', '_', Auth::user()->name);
 
             // Check storage space.
@@ -132,6 +133,7 @@ class FileController extends Controller
                 'name' => $file_name,
                 'extension' => $file_extension,
                 'size' => $file_size,
+                'mime_type' => $file_mime_type,
             ]);
 
             $this->dispatchFileEvent($file);

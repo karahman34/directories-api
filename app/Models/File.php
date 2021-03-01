@@ -16,6 +16,7 @@ class File extends Model
         'name',
         'extension',
         'size',
+        'mime_type',
     ];
 
     protected $casts = [
