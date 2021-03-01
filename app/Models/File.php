@@ -18,6 +18,10 @@ class File extends Model
         'size',
     ];
 
+    protected $casts = [
+        'size' => 'float',
+    ];
+
     /**
      * Get the folder model.
      *

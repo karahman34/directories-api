@@ -17,6 +17,11 @@ class Storage extends Model
         'used_space',
     ];
 
+    protected $casts = [
+        'space' => 'float',
+        'used_space' => 'float',
+    ];
+
     /**
      * Default space in bytes.
      *

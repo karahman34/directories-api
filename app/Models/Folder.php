@@ -19,6 +19,10 @@ class Folder extends Model
         'size',
     ];
 
+    protected $casts = [
+        'size' => 'float',
+    ];
+
     /**
      * Get storage Model.
      *

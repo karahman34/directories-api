@@ -18,7 +18,7 @@ class CreateFoldersTable extends Migration
             $table->foreignId('storage_id')->constrained('storages');
             $table->unsignedBigInteger('parent_folder_id')->nullable();
             $table->string('name');
-            $table->unsignedFloat('size')->default(0);
+            $table->string('size')->default(0);
             $table->timestamps();
         });
     }
