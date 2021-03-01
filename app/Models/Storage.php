@@ -22,7 +22,7 @@ class Storage extends Model
      *
      * @var float
      */
-    public static $defaultSpace = 5368706371;
+    public static $defaultSpace = 5368709120;
 
     /**
      * Get the storage owner.
