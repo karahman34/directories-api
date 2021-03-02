@@ -4,9 +4,8 @@ namespace App\Listeners;
 
 use App\Events\UserRegistered;
 use App\Models\Storage;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class CreateUserStorage implements ShouldQueue
+class CreateUserStorage
 {
     /**
      * Create root folder.

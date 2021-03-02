@@ -59,7 +59,7 @@ class DeleteFiles
     /**
      * Decrease folder size.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      * @param   float  $size
      *
      * @return  void

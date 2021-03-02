@@ -44,7 +44,7 @@ class FileController extends Controller
     /**
      * Format file name.
      *
-     * @param   string|int  $folder_id
+     * @param   string  $folder_id
      * @param   string  $file_name
      *
      * @return  string
@@ -97,7 +97,7 @@ class FileController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'folder_id' => 'required|integer',
+            'folder_id' => 'required|string',
             'file' => 'required|file|max:1024000'
         ]);
 

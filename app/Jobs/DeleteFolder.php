@@ -66,7 +66,7 @@ class DeleteFolder implements ShouldQueue
     /**
      * Get sub folders.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      *
      * @return  mixed
      */
@@ -78,7 +78,7 @@ class DeleteFolder implements ShouldQueue
     /**
      * Get sub files.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      *
      * @return  mixed
      */
@@ -90,7 +90,7 @@ class DeleteFolder implements ShouldQueue
     /**
      * Delete folder.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      *
      * @return  void
      */

@@ -14,9 +14,9 @@ class CreateFoldersTable extends Migration
     public function up()
     {
         Schema::create('folders', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->foreignId('storage_id')->constrained('storages');
-            $table->unsignedBigInteger('parent_folder_id')->nullable();
+            $table->uuid('parent_folder_id')->nullable();
             $table->string('name');
             $table->string('size')->default(0);
             $table->timestamps();

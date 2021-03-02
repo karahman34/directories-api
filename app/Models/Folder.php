@@ -7,12 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Ramsey\Uuid\Uuid;
 
 class Folder extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'storage_id',
         'parent_folder_id',
         'name',
@@ -22,6 +24,22 @@ class Folder extends Model
     protected $casts = [
         'size' => 'float',
     ];
+
+    protected $keyType = 'string';
+
+    public $incrementing = false;
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            $model->id = Uuid::uuid4()->toString();
+        });
+    }
 
     /**
      * Get storage Model.

@@ -34,7 +34,7 @@ class FolderController extends Controller
     /**
      * Get folder with the sub folders and files.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      *
      * @return  Illuminate\Http\JsonResponse
      */
@@ -55,8 +55,8 @@ class FolderController extends Controller
     /**
      * Check wheater the folder exist or not.
      *
-     * @param   int|string  $parent_folder_id
-     * @param   int|string  $folder_name
+     * @param   string  $parent_folder_id
+     * @param   string  $folder_name
      *
      * @return  bool
      */
@@ -70,7 +70,7 @@ class FolderController extends Controller
     /**
      * Check if parent folder exist.
      *
-     * @param   int|string  $parent_folder_id
+     * @param   string  $parent_folder_id
      *
      * @return  bool
      */
@@ -91,7 +91,7 @@ class FolderController extends Controller
     public function store(Request $request)
     {
         $payload = $request->validate([
-            'parent_folder_id' => 'required|integer',
+            'parent_folder_id' => 'required|string',
             'name' => 'required|string|max:255'
         ]);
 
@@ -124,7 +124,7 @@ class FolderController extends Controller
     public function update(Request $request, Folder $folder)
     {
         $payload = $request->validate([
-            'parent_folder_id' => 'required|integer',
+            'parent_folder_id' => 'required|string',
             'name' => 'required|string|max:255'
         ]);
 

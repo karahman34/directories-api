@@ -10,7 +10,7 @@ class IncreaseFolderSize
     /**
      * Get folder model.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      *
      * @return  Folder
      */
@@ -22,7 +22,7 @@ class IncreaseFolderSize
     /**
      * Increase folder size.
      *
-     * @param   int|string  $folder_id
+     * @param   string  $folder_id
      * @param   float  $size
      *
      * @return  void
