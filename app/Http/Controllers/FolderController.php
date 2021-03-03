@@ -124,20 +124,17 @@ class FolderController extends Controller
     public function update(Request $request, Folder $folder)
     {
         $payload = $request->validate([
-            'parent_folder_id' => 'required|string',
             'name' => 'required|string|max:255'
         ]);
 
         try {
-            if (!$this->isParentFolderExist($payload['parent_folder_id'])) {
-                return Transformer::failed('Parent folder not found.', null, 404);
-            }
-
-            if ($this->isFolderNameExist($payload['parent_folder_id'], $payload['name'])) {
+            if ($this->isFolderNameExist($folder->parent_folder_id, $payload['name'])) {
                 return Transformer::failed('Name already exist.', null, 400);
             }
 
-            $folder->update($payload);
+            $folder->update([
+                'name' => $payload['name'],
+            ]);
 
             return Transformer::success('Success to update folder.', new FolderResource($folder));
         } catch (\Throwable $th) {
