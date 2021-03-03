@@ -152,6 +152,10 @@ class FolderController extends Controller
     public function destroy(Folder $folder)
     {
         try {
+            if (is_null($folder->parent_folder_id)) {
+                return Transformer::failed('You cannot delete root folder.', null, 403);
+            }
+
             DeleteFolder::dispatchSync(Auth::user()->storage, $folder);
 
             return Transformer::success('Success to delete folder.');
