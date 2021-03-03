@@ -6,6 +6,8 @@ use App\Http\Helpers\Transformer;
 use App\Http\Resources\FilesCollection;
 use App\Http\Resources\SearchResultsCollection;
 use App\Http\Resources\StorageResource;
+use App\Jobs\DeleteFiles;
+use App\Jobs\DeleteFolder;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -79,6 +81,51 @@ class UserController extends Controller
             return Transformer::success('Success to get recent upload files.', new FilesCollection($files));
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to get recent upload files.');
+        }
+    }
+
+    /**
+     * Batch delete files & folders.
+     *
+     * @param   Request  $request
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function batchDelete(Request $request)
+    {
+        $payload = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'string',
+            'parent_folder_id' => 'required|string'
+        ]);
+
+        try {
+            $storage = Auth::user()->storage;
+            $files = DB::table('files')
+                            ->select('files.*')
+                            ->join('folders', 'folders.id', 'files.folder_id')
+                            ->join('storages', 'storages.id', 'folders.storage_id')
+                            ->where('storages.user_id', Auth::id())
+                            ->where('files.folder_id', $payload['parent_folder_id'])
+                            ->whereIn('files.id', $payload['ids'])
+                            ->get();
+
+            $folders = Folder::owned()
+                                ->where('parent_folder_id', $payload['parent_folder_id'])
+                                ->whereIn('id', $payload['ids'])
+                                ->get();
+
+            // Delete files job.
+            DeleteFiles::dispatchSync($storage, $files);
+
+            // Delete folder job.
+            foreach ($folders as $folder) {
+                DeleteFolder::dispatchSync($storage, $folder);
+            }
+
+            return Transformer::success('Success to run batch delete.', $files->merge($folders));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to run batch delete.');
         }
     }
 }
