@@ -6,6 +6,7 @@ use App\Http\Helpers\Transformer;
 use App\Http\Resources\FilesCollection;
 use App\Http\Resources\SearchResultsCollection;
 use App\Http\Resources\StorageResource;
+use App\Http\Resources\UserSettingsResource;
 use App\Jobs\DeleteFiles;
 use App\Jobs\DeleteFolder;
 use App\Models\Folder;
@@ -82,6 +83,29 @@ class UserController extends Controller
             return Transformer::success('Success to get recent upload files.', new FilesCollection($files));
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to get recent upload files.');
+        }
+    }
+
+    /**
+     * Update user settings.
+     *
+     * @param   Request  $request
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function updateSettings(Request $request)
+    {
+        $payload = $request->validate([
+            'trash' => 'required|string|in:enable,disable'
+        ]);
+
+        try {
+            $user = Auth::user();
+            $user->settings()->update($payload);
+
+            return Transformer::success('Success to update user settings.', new UserSettingsResource($user->settings));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to update user settings.');
         }
     }
 

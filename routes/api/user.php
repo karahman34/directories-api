@@ -8,5 +8,7 @@ Route::prefix('user')->middleware('auth')->group(function () {
     Route::get('/search', [UserController::class, 'search']);
     Route::get('/recent-uploads', [UserController::class, 'getRecentUploads']);
 
+    Route::patch('/settings', [UserController::class, 'updateSettings']);
+
     Route::delete('/storage/batch-delete', [UserController::class, 'batchDelete']);
 });
