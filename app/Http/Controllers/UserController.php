@@ -74,6 +74,7 @@ class UserController extends Controller
                             ->join('folders', 'files.folder_id', 'folders.id')
                             ->join('storages', 'folders.storage_id', 'storages.id')
                             ->where('folders.storage_id', Auth::id())
+                            ->whereNull('files.deleted_at')
                             ->orderByDesc('files.created_at')
                             ->limit(16)
                             ->get();
