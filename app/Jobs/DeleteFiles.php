@@ -65,7 +65,7 @@ class DeleteFiles
      */
     private function deleteFilesModel(array $deleted_files_id)
     {
-        File::whereIn('id', $deleted_files_id)->delete();
+        File::whereIn('id', $deleted_files_id)->forceDelete();
     }
 
     /**

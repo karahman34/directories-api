@@ -243,13 +243,15 @@ class FolderController extends Controller
     /**
      * Delete folder.
      *
-     * @param   Folder  $folder
+     * @param   string  $id
      *
      * @return  Illuminate\Http\JsonResponse
      */
-    public function destroy(Folder $folder)
+    public function destroy(string $id)
     {
         try {
+            $folder = Folder::withTrashed()->findOrFail($id);
+
             if ($folder->isRoot()) {
                 return Transformer::failed('You cannot delete root folder.', null, 403);
             }
@@ -259,6 +261,47 @@ class FolderController extends Controller
             return Transformer::success('Success to delete folder.');
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to delete folder.');
+        }
+    }
+
+    /**
+     * Soft Delete folder.
+     *
+     * @param   Folder  $folder
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function softDestroy(Folder $folder)
+    {
+        try {
+            if ($folder->isRoot()) {
+                return Transformer::failed('You cannot delete root folder.', null, 403);
+            }
+
+            $folder->delete();
+
+            return Transformer::success('Success to soft delete folder.');
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to soft delete folder.');
+        }
+    }
+
+    /**
+     * Restore Soft Deleted folder.
+     *
+     * @param   string  $id
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function restore(string $id)
+    {
+        try {
+            $folder = Folder::onlyTrashed()->findOrFail($id);
+            $folder->restore();
+
+            return Transformer::success('Success to restore soft deleted folder.', new FolderResource($folder));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to restore soft deleted folder.');
         }
     }
 }

@@ -121,6 +121,6 @@ class DeleteFolder implements ShouldQueue
     {
         $this->deleteSubFoldersAndFiles($this->folder->id);
 
-        Folder::whereIn('id', $this->deleted_folders_id)->delete();
+        Folder::whereIn('id', $this->deleted_folders_id)->forceDelete();
     }
 }

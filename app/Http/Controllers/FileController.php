@@ -181,19 +181,58 @@ class FileController extends Controller
     /**
      * Delete file.
      *
-     * @param   File  $file
+     * @param   string  $id
      *
      * @return  Illuminate\Http\JsonResponse
      */
-    public function destroy(File $file)
+    public function destroy(string $id)
     {
         try {
+            $file = File::withTrashed()->findOrFail($id);
+
             // Dispatch delete file job.
             DeleteFiles::dispatchSync(Auth::user()->storage, collect([$file]));
 
             return Transformer::success('Success to delete file.', $file);
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to delete file.');
+        }
+    }
+
+    /**
+    * Soft Delete file.
+    *
+    * @param   File  $file
+    *
+    * @return  Illuminate\Http\JsonResponse
+    */
+    public function softDestroy(File $file)
+    {
+        try {
+            $file->delete();
+
+            return Transformer::success('Success to soft delete file.');
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to soft delete file.');
+        }
+    }
+
+    /**
+    * Restore Deleted file.
+    *
+    * @param   string   $id
+    *
+    * @return  Illuminate\Http\JsonResponse
+    */
+    public function restore(string $id)
+    {
+        try {
+            $file = File::onlyTrashed()->findOrFail($id);
+            $file->restore();
+
+            return Transformer::success('Success to restore soft deleted file.', new FileResource($file));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to restore soft deleted file.');
         }
     }
 }

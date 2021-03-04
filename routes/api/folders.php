@@ -12,6 +12,8 @@ Route::prefix('folders')->middleware('auth')->group(function () {
     Route::post('/{folder}/move', [FolderController::class, 'move']);
 
     Route::patch('/{folder}', [FolderController::class, 'update']);
+    Route::patch('/{id}/restore', [FolderController::class, 'restore']);
 
-    Route::delete('/{folder}', [FolderController::class, 'destroy']);
+    Route::delete('/{id}', [FolderController::class, 'destroy']);
+    Route::delete('/{folder}/soft', [FolderController::class, 'softDestroy']);
 });
