@@ -103,6 +103,7 @@ class FileHelper
         
         $file->update([
             'folder_id' => $folder_id,
+            'name' => self::formatFileName($folder_id, $file->name),
         ]);
             
         DecreaseParentFolderSize::dispatchSync($old_folder_id, $file->size);
