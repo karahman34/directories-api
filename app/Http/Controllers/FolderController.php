@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\CopyFolderHelper;
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FolderResource;
 use App\Http\Resources\WithSubFolderResource;
+use App\Jobs\DecreaseParentFolderSize;
 use App\Jobs\DeleteFolder;
+use App\Jobs\IncreaseParentFolderSize;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -143,6 +146,106 @@ class FolderController extends Controller
     }
 
     /**
+     * Checke if the storage is full.
+     *
+     * @param   float  $size
+     *
+     * @return  bool
+     */
+    private function isStorageFull(float $size)
+    {
+        $storage = Auth::user()->storage()->select('space', 'used_space')->first();
+
+        return $size + $storage->used_space > $storage->space
+            ? true
+            : false;
+    }
+
+    /**
+     * Copy folder.
+     *
+     * @param   Request  $request
+     * @param   Folder   $folder
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function copy(Request $request, Folder $folder)
+    {
+        $payload = $request->validate([
+            'parent_folder_id' => 'required|string',
+        ]);
+
+        try {
+            if ($folder->isRoot()) {
+                return Transformer::failed('You cannot copy root folder.', null, 403);
+            }
+
+            if ($this->isStorageFull($folder->size)) {
+                return Transformer::failed('Storage is already hit the limit.', null, 400);
+            }
+
+            // Deeply copy folder.
+            $new_folder = CopyFolderHelper::set($folder, $payload['parent_folder_id'])->copy();
+
+            // Increase storage used space.
+            Auth::user()->storage()->increment('used_space', $folder->size);
+
+            // Increase parents folder size.
+            IncreaseParentFolderSize::dispatch($payload['parent_folder_id'], $folder->size);
+
+            return Transformer::success('Success to copy folder.', new FolderResource($new_folder), 201);
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to copy folder.', $th->getLine());
+        }
+    }
+
+    /**
+     * Move folder.
+     *
+     * @param   Request  $request
+     * @param   Folder   $folder
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function move(Request $request, Folder $folder)
+    {
+        $payload = $request->validate([
+            'parent_folder_id' => 'required|string'
+        ]);
+
+        try {
+            if ($folder->isRoot()) {
+                return Transformer::failed('You cannot move root folder.', null, 403);
+            }
+
+            if (!$this->isParentFolderExist($payload['parent_folder_id'])) {
+                return Transformer::failed('Parent folder not found.', null, 404);
+            }
+
+            $old_parent_id = $folder->parent_folder_id;
+            $folder_name = $folder->name;
+            $raw_name_exists = Folder::where('parent_folder_id', $folder->parent_folder_id)
+                                        ->where('name', $folder_name)
+                                        ->exists();
+            if ($raw_name_exists) {
+                $folder_name = "{$folder_name} (Duplicate)";
+            }
+
+            $folder->update([
+                'name' => $folder_name,
+                'parent_folder_id' => $payload['parent_folder_id']
+            ]);
+
+            DecreaseParentFolderSize::dispatchSync($old_parent_id, $folder->size);
+            IncreaseParentFolderSize::dispatchSync($folder->parent_folder_id, $folder->size);
+
+            return Transformer::success('Success to move folder.', new FolderResource($folder));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to move folder.');
+        }
+    }
+
+    /**
      * Delete folder.
      *
      * @param   Folder  $folder
@@ -152,7 +255,7 @@ class FolderController extends Controller
     public function destroy(Folder $folder)
     {
         try {
-            if (is_null($folder->parent_folder_id)) {
+            if ($folder->isRoot()) {
                 return Transformer::failed('You cannot delete root folder.', null, 403);
             }
 

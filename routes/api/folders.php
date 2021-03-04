@@ -8,6 +8,8 @@ Route::prefix('folders')->middleware('auth')->group(function () {
     Route::get('/{folder_id}', [FolderController::class, 'show']);
 
     Route::post('/', [FolderController::class, 'store']);
+    Route::post('/{folder}/copy', [FolderController::class, 'copy']);
+    Route::post('/{folder}/move', [FolderController::class, 'move']);
 
     Route::patch('/{folder}', [FolderController::class, 'update']);
 

@@ -83,4 +83,14 @@ class Folder extends Model
 
         return $query->where('storage_id', $storage->id);
     }
+
+    /**
+     * Check if the model is root folder.
+     *
+     * @return  bool
+     */
+    public function isRoot()
+    {
+        return is_null($this->parent_folder_id);
+    }
 }
