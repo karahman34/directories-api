@@ -28,6 +28,8 @@ class File extends Model
     protected $keyType = 'string';
 
     public $incrementing = false;
+    
+    public static $folder = 'uploads';
 
     /**
      * The "booted" method of the model.

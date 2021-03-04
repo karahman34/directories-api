@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\FileCreated;
-use App\Http\Helpers\Transformer;
-use App\Http\Resources\FileResource;
-use App\Jobs\DeleteFiles;
 use App\Models\File;
 use App\Models\Folder;
+use App\Jobs\DeleteFiles;
+use App\Events\FileCreated;
+use App\Helpers\FileHelper;
 use Illuminate\Http\Request;
+use App\Http\Helpers\Transformer;
+use App\Http\Resources\FileResource;
 use Illuminate\Support\Facades\Auth;
 
 class FileController extends Controller
@@ -42,45 +43,13 @@ class FileController extends Controller
     }
 
     /**
-     * Format file name.
-     *
-     * @param   string  $folder_id
-     * @param   string  $file_name
-     *
-     * @return  string
-     */
-    private function formatFileName($folder_id, string $file_name)
-    {
-        $file = File::selectRaw('SUBSTRING(name, -2, 1) + 1 AS next')
-                                ->where('folder_id', $folder_id)
-                                ->where(function ($query) use ($file_name) {
-                                    $query->where(function ($query2) use ($file_name) {
-                                        $query2->whereRaw('SUBSTRING(name, 1, CHAR_LENGTH(name) - 4) = ?', [$file_name])
-                                                ->whereRaw('SUBSTRING(name, -4) REGEXP "^ \\\\([0-9]+\\\\)$"');
-                                    })
-                                    ->orWhere('name', $file_name);
-                                })
-                                ->orderByDesc('created_at')
-                                ->limit(1)
-                                ->first();
-
-        if (!$file) {
-            return $file_name;
-        }
-
-        $next = (int) $file->next;
-
-        return "{$file_name} ({$next})";
-    }
-
-    /**
      * Dispatching file event.
      *
      * @param  File  $file
      *
      * @return  void
      */
-    private function dispatchFileEvent(File $file)
+    private function emitFileCreatedEvent(File $file)
     {
         $storage = Auth()->user()->storage()->select('id')->first();
 
@@ -115,11 +84,11 @@ class FileController extends Controller
             
             // Prep file.
             $file_upload = $request->file('file');
-            $file_name = $this->formatFileName($folder_id, pathinfo($file_upload->getClientOriginalName(), PATHINFO_FILENAME));
+            $file_name = FileHelper::formatFileName($folder_id, pathinfo($file_upload->getClientOriginalName(), PATHINFO_FILENAME));
             $file_extension = $file_upload->getClientOriginalExtension();
             $file_size = $file_upload->getSize();
             $file_mime_type = $file_upload->getMimeType();
-            $folder_upload = 'uploads';
+            $folder_upload = File::$folder;
 
             // Check storage space.
             if (!$this->checkStorageSpace($file_size)) {
@@ -136,11 +105,76 @@ class FileController extends Controller
                 'mime_type' => $file_mime_type,
             ]);
 
-            $this->dispatchFileEvent($file);
+            $this->emitFileCreatedEvent($file);
 
             return Transformer::success('Success to upload file.', new FileResource($file), 201);
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to upload file.');
+        }
+    }
+
+    /**
+     * Copy file to another directory.
+     *
+     * @param   Request  $request
+     * @param   File     $file
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function copy(Request $request, File $file)
+    {
+        $payload = $request->validate([
+            'folder_id' => 'required|string'
+        ]);
+
+        try {
+            // Check new folder.
+            if (!$this->getFolder($payload['folder_id'])) {
+                return Transformer::failed('Parent folder not found.', null, 404);
+            }
+
+            // Check storage space.
+            if (!$this->checkStorageSpace($file->size)) {
+                return Transformer::failed('Storage is already hit the limit.', null, 403);
+            }
+
+            // Copy file model.
+            $copiedFile = FileHelper::copyFileModel($file, $payload['folder_id']);
+
+            $this->emitFileCreatedEvent($copiedFile);
+
+            return Transformer::success('Success to copy file.', new FileResource($copiedFile), 201);
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to copy file.');
+        }
+    }
+
+    /**
+     * Move file path.
+     *
+     * @param   Request  $request
+     * @param   File     $file
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function move(Request $request, File $file)
+    {
+        $payload = $request->validate([
+            'folder_id' => 'required|string'
+        ]);
+
+        try {
+            // Check new folder.
+            if (!$this->getFolder($payload['folder_id'])) {
+                return Transformer::failed('Parent folder not found.', null, 404);
+            }
+
+            // Move file.
+            $file = FileHelper::moveFileModel($file, $payload['folder_id']);
+
+            return Transformer::success('Success to move file.', new FileResource($file));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to move file.');
         }
     }
 
