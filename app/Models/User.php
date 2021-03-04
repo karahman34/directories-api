@@ -72,4 +72,14 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(Storage::class);
     }
+
+    /**
+     * Get the user setting model.
+     *
+     * @return  HasOne
+     */
+    public function setting()
+    {
+        return $this->hasOne(Setting::class);
+    }
 }
