@@ -20,26 +20,24 @@ class FileHelper
      */
     public static function formatFileName($folder_id, string $file_name)
     {
-        $file = File::selectRaw('SUBSTRING(name, -2, 1) + 1 AS next')
-                                ->where('folder_id', $folder_id)
-                                ->where(function ($query) use ($file_name) {
-                                    $query->where(function ($query2) use ($file_name) {
-                                        $query2->whereRaw('SUBSTRING(name, 1, CHAR_LENGTH(name) - 4) = ?', [$file_name])
-                                                ->whereRaw('SUBSTRING(name, -4) REGEXP "^ \\\\([0-9]+\\\\)$"');
-                                    })
-                                    ->orWhere('name', $file_name);
-                                })
-                                ->orderByDesc('created_at')
-                                ->limit(1)
-                                ->first();
+        $raw = File::where('folder_id', $folder_id)
+                    ->where('name', $file_name)
+                    ->exists();
 
-        if (!$file) {
+        if (!$raw) {
             return $file_name;
+        } else {
+            $last = File::where('folder_id', $folder_id)
+                        ->where(function ($query) use ($file_name) {
+                            $query->whereRaw('SUBSTRING(name, 1, CHAR_LENGTH(name) - 4) = ?', [$file_name])
+                                    ->whereRaw('SUBSTRING(name, -4) REGEXP "^ \\\\([0-9]+\\\\)$"');
+                        })
+                        ->count();
+
+            $next = $last + 1;
+
+            return "{$file_name} ({$next})";
         }
-
-        $next = (int) $file->next;
-
-        return "{$file_name} ({$next})";
     }
 
     /**
