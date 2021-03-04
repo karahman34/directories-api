@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Events\FileCreated;
 use App\Events\UserRegistered;
+use App\Listeners\CreateUserSetting;
 use App\Listeners\CreateUserStorage;
 use App\Listeners\IncreaseFolderSize;
 use App\Listeners\IncreaseStorageSize;
@@ -21,6 +22,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         UserRegistered::class => [
             CreateUserStorage::class,
+            CreateUserSetting::class,
         ],
         FileCreated::class => [
             IncreaseStorageSize::class,
