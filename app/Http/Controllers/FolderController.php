@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\CopyFolderHelper;
+use App\Helpers\FolderHelper;
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FolderResource;
 use App\Http\Resources\WithSubFolderResource;
@@ -223,13 +224,7 @@ class FolderController extends Controller
             }
 
             $old_parent_id = $folder->parent_folder_id;
-            $folder_name = $folder->name;
-            $raw_name_exists = Folder::where('parent_folder_id', $folder->parent_folder_id)
-                                        ->where('name', $folder_name)
-                                        ->exists();
-            if ($raw_name_exists) {
-                $folder_name = "{$folder_name} (Duplicate)";
-            }
+            $folder_name = FolderHelper::formatFolderName($folder->name, $payload['parent_folder_id']);
 
             $folder->update([
                 'name' => $folder_name,

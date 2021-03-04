@@ -71,23 +71,6 @@ class CopyFolderHelper
     }
 
     /**
-     * Format folder name.
-     *
-     * @param   string  $name
-     * @param   string  $parent_folder_id
-     *
-     * @return  string
-     */
-    private static function formatFolderName(string $name, string $parent_folder_id)
-    {
-        $raw_name_exist = Folder::where('parent_folder_id', $parent_folder_id)
-                                    ->where('name', $name)
-                                    ->exists();
-
-        return $raw_name_exist ? "{$name} (Copy)" : $name;
-    }
-
-    /**
      * Copy folder.
      *
      * @param  Folder  $folder
@@ -99,7 +82,7 @@ class CopyFolderHelper
     {
         $folder_name = $folder->name;
         if ($folder->id === self::$folder->id) {
-            $folder_name = self::formatFolderName($folder->name, $parent_folder_id);
+            $folder_name = FolderHelper::formatFolderName($folder->name, $parent_folder_id);
         }
 
         $new_folder = Folder::create([
