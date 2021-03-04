@@ -57,27 +57,6 @@ class DeleteFiles
     }
 
     /**
-     * Decrease folder size.
-     *
-     * @param   string  $folder_id
-     * @param   float  $size
-     *
-     * @return  void
-     */
-    private function decreaseFolderSize($folder_id, $size)
-    {
-        $folder = Folder::select('id', 'parent_folder_id', 'size')->where('id', $folder_id)->first();
-
-        if ($folder) {
-            $folder->decrement('size', $size);
-
-            if (!is_null($folder->parent_folder_id)) {
-                $this->decreaseFolderSize($folder->parent_folder_id, $size);
-            }
-        }
-    }
-
-    /**
      * Delete files model.
      *
      * @param   array  $deleted_files_id
@@ -104,7 +83,7 @@ class DeleteFiles
                 $size_decrease += $file->size;
                 $deleted_files_id[] = $file->id;
 
-                $this->decreaseFolderSize($file->folder_id, $file->size);
+                DecreaseParentFolderSize::dispatchSync($file->folder_id, $file->size);
             }
         });
 
