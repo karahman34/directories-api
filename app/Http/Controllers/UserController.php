@@ -9,6 +9,7 @@ use App\Http\Resources\StorageResource;
 use App\Http\Resources\UserSettingsResource;
 use App\Jobs\DeleteFiles;
 use App\Jobs\DeleteFolder;
+use App\Models\File;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -149,6 +150,36 @@ class UserController extends Controller
             }
 
             return Transformer::success('Success to run batch delete.', $files->merge($folders));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to run batch delete.');
+        }
+    }
+
+    /**
+     * Run soft batch delete.
+     *
+     * @param   Request  $request
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function softBatchDelete(Request $request)
+    {
+        $payload = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'string'
+        ]);
+
+        try {
+            File::select('files.id')
+                ->join('folders', 'folders.id', 'files.folder_id')
+                ->join('storages', 'storages.id', 'folders.storage_id')
+                ->where('storages.user_id', Auth::id())
+                ->whereIn('files.id', $payload['ids'])
+                ->delete();
+
+            Folder::owned()->whereIn('id', $payload['ids'])->delete();
+
+            return Transformer::success('Success to run soft batch delete.');
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to run batch delete.');
         }

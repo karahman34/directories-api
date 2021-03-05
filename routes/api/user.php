@@ -11,4 +11,5 @@ Route::prefix('user')->middleware('auth')->group(function () {
     Route::patch('/settings', [UserController::class, 'updateSettings']);
 
     Route::delete('/storage/batch-delete', [UserController::class, 'batchDelete']);
+    Route::delete('/storage/soft-batch-delete', [UserController::class, 'softBatchDelete']);
 });
