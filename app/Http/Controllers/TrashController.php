@@ -46,7 +46,11 @@ class TrashController extends Controller
             $folder = Folder::onlyTrashed()
                                 ->owned()
                                 ->where('id', $id)
-                                ->with(['files', 'sub_folders'])
+                                ->with(['files' => function ($query) {
+                                    $query->onlyTrashed();
+                                }, 'sub_folders' => function ($query) {
+                                    $query->onlyTrashed();
+                                }])
                                 ->first();
 
             return Transformer::success('Success to get folder detail.', new WithSubFolderResource($folder));
