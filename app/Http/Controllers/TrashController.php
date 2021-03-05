@@ -21,6 +21,7 @@ class TrashController extends Controller
         try {
             $folders = Folder::onlyTrashed()->owned()->get();
             $files = File::onlyTrashed()
+                            ->select('files.*')
                             ->join('folders', 'folders.id', 'files.folder_id')
                             ->join('storages', 'storages.id', 'folders.storage_id')
                             ->where('storages.user_id', Auth::id())
