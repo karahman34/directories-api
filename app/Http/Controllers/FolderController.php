@@ -10,6 +10,8 @@ use App\Http\Resources\WithSubFolderResource;
 use App\Jobs\DecreaseParentFolderSize;
 use App\Jobs\DeleteFolder;
 use App\Jobs\IncreaseParentFolderSize;
+use App\Jobs\RestoreFolder;
+use App\Jobs\SoftDeleteFolder;
 use App\Models\Folder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -251,12 +253,13 @@ class FolderController extends Controller
     {
         try {
             $folder = Folder::withTrashed()->findOrFail($id);
+            $storage = Auth::user()->storage;
 
             if ($folder->isRoot()) {
                 return Transformer::failed('You cannot delete root folder.', null, 403);
             }
 
-            DeleteFolder::dispatchSync(Auth::user()->storage, $folder);
+            DeleteFolder::dispatchSync($storage, $folder);
 
             return Transformer::success('Success to delete folder.');
         } catch (\Throwable $th) {
@@ -278,7 +281,8 @@ class FolderController extends Controller
                 return Transformer::failed('You cannot delete root folder.', null, 403);
             }
 
-            $folder->delete();
+            SoftDeleteFolder::dispatchSync($folder);
+            DecreaseParentFolderSize::dispatchSync($folder->parent_folder_id, $folder->size);
 
             return Transformer::success('Success to soft delete folder.');
         } catch (\Throwable $th) {
@@ -296,8 +300,13 @@ class FolderController extends Controller
     public function restore(string $id)
     {
         try {
-            $folder = Folder::onlyTrashed()->findOrFail($id);
-            $folder->restore();
+            $folder = Folder::onlyTrashed()
+                                ->where('id', $id)
+                                ->where('parent_folder_trashed', 'N')
+                                ->firstOrFail();
+
+            RestoreFolder::dispatchSync($folder);
+            IncreaseParentFolderSize::dispatchSync($folder->parent_folder_id, $folder->size);
 
             return Transformer::success('Success to restore soft deleted folder.', new FolderResource($folder));
         } catch (\Throwable $th) {

@@ -20,6 +20,7 @@ class Folder extends Model
         'parent_folder_id',
         'name',
         'size',
+        'parent_folder_trashed',
     ];
 
     protected $casts = [

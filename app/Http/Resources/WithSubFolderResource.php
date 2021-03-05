@@ -20,11 +20,11 @@ class WithSubFolderResource extends JsonResource
             'parent_folder_id' => $this->parent_folder_id,
             'name' => $this->name,
             'size' => $this->size,
+            'parent_folder_trashed' => $this->parent_folder_trashed,
+            'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'files' => $this->files->map(function ($file) {
-                return new FileResource($file);
-            }),
+            'files' => new FilesCollection($this->files),
             'sub_folders' => $this->sub_folders->map(function ($sub_folder) {
                 return new FolderResource($sub_folder);
             })

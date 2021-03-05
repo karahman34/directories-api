@@ -20,6 +20,8 @@ class FolderResource extends JsonResource
             'parent_folder_id' => $this->parent_folder_id,
             'name' => $this->name,
             'size' => $this->size,
+            'parent_folder_trashed' => $this->parent_folder_trashed,
+            'deleted_at' => $this->deleted_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'files' => null,

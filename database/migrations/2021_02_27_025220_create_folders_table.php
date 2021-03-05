@@ -19,6 +19,7 @@ class CreateFoldersTable extends Migration
             $table->uuid('parent_folder_id')->nullable();
             $table->string('name');
             $table->string('size')->default(0);
+            $table->enum('parent_folder_trashed', ['Y', 'N'])->default('N');
             $table->softDeletes();
             $table->timestamps();
         });

@@ -20,6 +20,7 @@ class File extends Model
         'extension',
         'size',
         'mime_type',
+        'folder_trashed',
     ];
 
     protected $casts = [

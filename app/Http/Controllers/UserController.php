@@ -7,8 +7,10 @@ use App\Http\Resources\FilesCollection;
 use App\Http\Resources\SearchResultsCollection;
 use App\Http\Resources\StorageResource;
 use App\Http\Resources\UserSettingsResource;
+use App\Jobs\DecreaseParentFolderSize;
 use App\Jobs\DeleteFiles;
 use App\Jobs\DeleteFolder;
+use App\Jobs\SoftDeleteFolder;
 use App\Models\File;
 use App\Models\Folder;
 use Illuminate\Http\Request;
@@ -51,10 +53,12 @@ class UserController extends Controller
             $storage = Auth::user()->storage()->select('id')->first();
             $folders = Folder::owned()->where('name', 'like', '%'.$q.'%')->get();
             $files = DB::table('files')
-                        ->selectRaw('files.id, files.folder_id, files.name, path, files.size, extension, mime_type, files.deleted_at, files.created_at, files.updated_at')
+                        ->selectRaw('files.id, files.folder_id, files.name, path, files.size, extension, mime_type, folder_trashed, files.deleted_at, files.created_at, files.updated_at')
                         ->join('folders', 'files.folder_id', 'folders.id')
                         ->where('folders.storage_id', $storage->id)
                         ->where('files.name', 'like', '%'.$q.'%')
+                        ->where('folder_trashed', 'N')
+                        ->whereNull('files.deleted_at')
                         ->get();
 
             return Transformer::success('Success to get search results.', new SearchResultsCollection($folders, $files));
@@ -166,19 +170,37 @@ class UserController extends Controller
     {
         $payload = $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'string'
+            'ids.*' => 'string',
+            'parent_folder_id' => 'required|string',
         ]);
 
         try {
-            File::select('files.id')
-                ->join('folders', 'folders.id', 'files.folder_id')
-                ->join('storages', 'storages.id', 'folders.storage_id')
-                ->where('storages.user_id', Auth::id())
-                ->whereIn('files.id', $payload['ids'])
-                ->delete();
+            $folders = Folder::owned()
+                    ->select('id', 'size')
+                    ->whereIn('id', $payload['ids'])
+                    ->where('parent_folder_id', $payload['parent_folder_id'])
+                    ->get();
+                                
+            $files = File::select('files.id', 'files.size')
+                    ->join('folders', 'folders.id', 'files.folder_id')
+                    ->join('storages', 'storages.id', 'folders.storage_id')
+                    ->where('storages.user_id', Auth::id())
+                    ->where('folder_id', $payload['parent_folder_id'])
+                    ->whereIn('files.id', $payload['ids'])
+                    ->get();
 
-            Folder::owned()->whereIn('id', $payload['ids'])->delete();
+            // Delete folders.
+            $folders->each(function (Folder $folder) {
+                SoftDeleteFolder::dispatchSync($folder);
+            });
 
+            // Delete files.
+            File::whereIn('id', $files->pluck('id'))->delete();
+                    
+            // Decrease parents folder size.
+            $size_decrease = $folders->sum('size') + $files->sum('size');
+            DecreaseParentFolderSize::dispatchSync($payload['parent_folder_id'], $size_decrease);
+                
             return Transformer::success('Success to run soft batch delete.');
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to run batch delete.');

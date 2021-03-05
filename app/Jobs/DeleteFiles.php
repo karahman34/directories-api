@@ -78,12 +78,14 @@ class DeleteFiles
         $size_decrease = 0;
         $deleted_files_id = [];
 
-        $this->files->each(function ($file) use (&$size_decrease, &$deleted_files_id) {
+        $this->files->each(function (File $file) use (&$size_decrease, &$deleted_files_id) {
             if (Storage::exists($file->path) && Storage::delete($file->path)) {
                 $size_decrease += $file->size;
                 $deleted_files_id[] = $file->id;
 
-                DecreaseParentFolderSize::dispatchSync($file->folder_id, $file->size);
+                if ($file->folder_trashed === 'N' && !$file->trashed()) {
+                    DecreaseParentFolderSize::dispatchSync($file->folder_id, $file->size);
+                }
             }
         });
 

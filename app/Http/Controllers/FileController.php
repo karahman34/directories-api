@@ -10,6 +10,8 @@ use App\Helpers\FileHelper;
 use Illuminate\Http\Request;
 use App\Http\Helpers\Transformer;
 use App\Http\Resources\FileResource;
+use App\Jobs\DecreaseParentFolderSize;
+use App\Jobs\IncreaseParentFolderSize;
 use Illuminate\Support\Facades\Auth;
 
 class FileController extends Controller
@@ -189,11 +191,16 @@ class FileController extends Controller
     {
         try {
             $file = File::withTrashed()->findOrFail($id);
+            $storage = Auth::user()->storage;
+
+            if (!$file->trashed() && $file->folder_trashed === 'Y') {
+                return Transformer::failed('You cannot delete file while the parent folder is deleted.', null, 403);
+            }
 
             // Dispatch delete file job.
-            DeleteFiles::dispatchSync(Auth::user()->storage, collect([$file]));
+            DeleteFiles::dispatchSync($storage, collect([$file]));
 
-            return Transformer::success('Success to delete file.', $file);
+            return Transformer::success('Success to delete file.');
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to delete file.');
         }
@@ -209,7 +216,11 @@ class FileController extends Controller
     public function softDestroy(File $file)
     {
         try {
+            // Soft Delete file.
             $file->delete();
+
+            // Decrease parents folder size.
+            DecreaseParentFolderSize::dispatchSync($file->folder_id, $file->size);
 
             return Transformer::success('Success to soft delete file.');
         } catch (\Throwable $th) {
@@ -227,12 +238,19 @@ class FileController extends Controller
     public function restore(string $id)
     {
         try {
-            $file = File::onlyTrashed()->findOrFail($id);
+            // Get the trashed file and restore it.
+            $file = File::onlyTrashed()
+                            ->where('id', $id)
+                            ->where('folder_trashed', 'N')
+                            ->firstOrFail();
             $file->restore();
+                            
+            // Increase parents folder size.
+            IncreaseParentFolderSize::dispatchSync($file->folder_id, $file->size);
 
-            return Transformer::success('Success to restore soft deleted file.', new FileResource($file));
+            return Transformer::success('Success to restore file.', new FileResource($file));
         } catch (\Throwable $th) {
-            return Transformer::failed('Failed to restore soft deleted file.');
+            return Transformer::failed('Failed to restore file.');
         }
     }
 }
