@@ -19,7 +19,7 @@ class TrashController extends Controller
     public function index()
     {
         try {
-            $folders = Folder::onlyTrashed()->owned()->get();
+            $folders = Folder::onlyTrashed()->owned()->with(['files', 'sub_folders'])->get();
             $files = File::onlyTrashed()
                             ->select('files.*')
                             ->join('folders', 'folders.id', 'files.folder_id')
@@ -27,9 +27,9 @@ class TrashController extends Controller
                             ->where('storages.user_id', Auth::id())
                             ->get();
 
-            return Transformer::success('Success to get trsah directories.', new TrashDirectoriesCollection($folders, $files));
+            return Transformer::success('Success to get trash directories.', new TrashDirectoriesCollection($folders, $files));
         } catch (\Throwable $th) {
-            return Transformer::failed('Failed to get trsah directories.');
+            return Transformer::failed('Failed to get trash directories.');
         }
     }
 

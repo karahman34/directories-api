@@ -13,6 +13,7 @@ use App\Http\Resources\FileResource;
 use App\Jobs\DecreaseParentFolderSize;
 use App\Jobs\IncreaseParentFolderSize;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class FileController extends Controller
 {
@@ -112,6 +113,75 @@ class FileController extends Controller
             return Transformer::success('Success to upload file.', new FileResource($file), 201);
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to upload file.');
+        }
+    }
+
+    /**
+     * Get file info.
+     *
+     * @param   File  $file
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function show(File $file)
+    {
+        $this->authorize('view', $file);
+
+        try {
+            return Transformer::success('Success to get file info.', new FileResource($file));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to get file info.');
+        }
+    }
+
+    /**
+     * Download file.
+     *
+     * @param   string  $id
+     *
+     * @return  mixed
+     */
+    public function download($id)
+    {
+        $file = File::withTrashed()->findOrFail($id);
+
+        $this->authorize('view', $file);
+
+        try {
+            if ($file->trashed() && !$file->isOwned()) {
+                return Transformer::failed('File not found / deleted.', null, 404);
+            }
+
+            return Storage::download($file->path);
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to get file info.');
+        }
+    }
+
+    /**
+     * Update file visibility.
+     *
+     * @param   Request  $request
+     * @param   File     $file
+     *
+     * @return  Illuminate\Http\JsonResponse
+     */
+    public function updateVisibility(Request $request, File $file)
+    {
+        $this->authorize('update', $file);
+        
+        $request->validate([
+            'is_public' => 'required|string|in:y,n'
+        ]);
+
+        try {
+            $file->update([
+                'is_public' => strtoupper($request->input('is_public'))
+            ]);
+
+            return Transformer::success('Success to update file visibility.', new FileResource($file));
+        } catch (\Throwable $th) {
+            return Transformer::failed('Failed to update file visibility.');
         }
     }
 

@@ -22,6 +22,7 @@ class CreateFilesTable extends Migration
             $table->string('size');
             $table->string('mime_type');
             $table->enum('folder_trashed', ['Y', 'N'])->default('N');
+            $table->enum('is_public', ['Y', 'N'])->default('N');
             $table->softDeletes();
             $table->timestamps();
         });
