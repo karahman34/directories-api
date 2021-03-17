@@ -195,6 +195,8 @@ class FileController extends Controller
      */
     public function copy(Request $request, File $file)
     {
+        $this->authorize('update', $file);
+
         $payload = $request->validate([
             'folder_id' => 'required|string'
         ]);
@@ -231,6 +233,8 @@ class FileController extends Controller
      */
     public function move(Request $request, File $file)
     {
+        $this->authorize('update', $file);
+        
         $payload = $request->validate([
             'folder_id' => 'required|string'
         ]);
@@ -259,8 +263,11 @@ class FileController extends Controller
      */
     public function destroy(string $id)
     {
+        $file = File::withTrashed()->findOrFail($id);
+        
+        $this->authorize('delete', $file);
+
         try {
-            $file = File::withTrashed()->findOrFail($id);
             $storage = Auth::user()->storage;
 
             if (!$file->trashed() && $file->folder_trashed === 'Y') {
@@ -285,6 +292,8 @@ class FileController extends Controller
     */
     public function softDestroy(File $file)
     {
+        $this->authorize('delete', $file);
+
         try {
             // Soft Delete file.
             $file->delete();
@@ -307,12 +316,14 @@ class FileController extends Controller
     */
     public function restore(string $id)
     {
-        try {
-            // Get the trashed file and restore it.
-            $file = File::onlyTrashed()
+        $file = File::onlyTrashed()
                             ->where('id', $id)
                             ->where('folder_trashed', 'N')
                             ->firstOrFail();
+        
+        $this->authorize('restore', $file);
+        
+        try {
             $file->restore();
                             
             // Increase parents folder size.
