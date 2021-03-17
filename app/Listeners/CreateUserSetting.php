@@ -14,7 +14,7 @@ class CreateUserSetting
      */
     public function handle(UserRegistered $event)
     {
-        $event->user->setting()->create([
+        $event->user->settings()->create([
             'trash' => 'enable'
         ]);
     }
