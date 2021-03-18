@@ -154,7 +154,9 @@ class FileController extends Controller
                 return Transformer::failed('File not found / deleted.', null, 404);
             }
 
-            return Storage::download($file->path);
+            $file_name = $file->name . '.' . $file->extension;
+
+            return Storage::download($file->path, $file_name);
         } catch (\Throwable $th) {
             return Transformer::failed('Failed to get file info.');
         }
