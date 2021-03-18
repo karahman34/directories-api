@@ -106,6 +106,8 @@ class FileController extends Controller
                 'extension' => $file_extension,
                 'size' => $file_size,
                 'mime_type' => $file_mime_type,
+                'is_public' => 'N',
+                'folder_trashed' => 'N',
             ]);
 
             $this->emitFileCreatedEvent($file);
