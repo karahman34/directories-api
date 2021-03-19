@@ -101,4 +101,14 @@ class File extends Model
     {
         return $this->is_public === 'Y';
     }
+
+    /**
+     * Check if the folder is trashed.
+     *
+     * @return  bool
+     */
+    public function folderTrashed()
+    {
+        return $this->folder_trashed === 'Y';
+    }
 }

@@ -11,24 +11,6 @@ class FilePolicy
     use HandlesAuthorization;
 
     /**
-     * Check file visibility.
-     *
-     * @param   File  $file
-     *
-     * @return  bool
-     */
-    private function checkFileVisibility(File $file)
-    {
-        if (!$file->isPublic()) {
-            if (!$file->isOwned()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * Determine whether the user can view the model.
      *
      * @param  \App\Models\User  $user
@@ -37,11 +19,11 @@ class FilePolicy
      */
     public function view(?User $user, File $file)
     {
-        if (!$user && $file->isPublic()) {
+        if (($user && $file->isOwned()) || ($file->isPublic() && !$file->trashed() && !$file->folderTrashed())) {
             return true;
+        } else {
+            return false;
         }
-
-        return $this->checkFileVisibility($file);
     }
 
     /**
