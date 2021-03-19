@@ -91,4 +91,14 @@ class File extends Model
 
         return true;
     }
+
+    /**
+     * Check if file is public.
+     *
+     * @return  bool
+     */
+    public function isPublic()
+    {
+        return $this->is_public === 'Y';
+    }
 }

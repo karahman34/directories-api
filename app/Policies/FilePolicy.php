@@ -19,7 +19,7 @@ class FilePolicy
      */
     private function checkFileVisibility(File $file)
     {
-        if ($file->is_public === 'N') {
+        if (!$file->isPublic()) {
             if (!$file->isOwned()) {
                 return false;
             }
@@ -35,8 +35,12 @@ class FilePolicy
      * @param  \App\Models\File  $file
      * @return mixed
      */
-    public function view(User $user, File $file)
+    public function view(?User $user, File $file)
     {
+        if (!$user && $file->isPublic()) {
+            return true;
+        }
+
         return $this->checkFileVisibility($file);
     }
 
