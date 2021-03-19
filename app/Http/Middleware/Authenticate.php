@@ -10,16 +10,6 @@ use Illuminate\Support\Facades\Auth;
 class Authenticate
 {
     /**
-     * Json Response structure.
-     *
-     * @return  Illuminate\Http\JsonResponse
-     */
-    private function errorResponse()
-    {
-        return Transformer::failed('Only for authenticated user.', null, 401);
-    }
-
-    /**
      * Handle an incoming request.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -30,17 +20,8 @@ class Authenticate
      */
     public function handle(Request $request, Closure $next, $guard = 'api')
     {
-        $auth = Auth::guard($guard);
-        $authenticated = $auth->check();
-
-        if (!$authenticated) {
-            return $this->errorResponse();
-        } else {
-            $payload = $auth->payload();
-
-            if ($auth->user()->token !== $payload->get('token')) {
-                return $this->errorResponse();
-            }
+        if (!Auth::guard($guard)->check()) {
+            return Transformer::failed('Only for authenticated user.', null, 401);
         }
 
         return $next($request);

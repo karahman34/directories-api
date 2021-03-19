@@ -29,15 +29,10 @@ class AuthController extends Controller
 
         try {
             $credentials = $request->only(['email', 'password']);
-            $rememberToken = Str::random(40);
 
-            if (! $token = Auth::claims(['token' => $rememberToken])->attempt($credentials)) {
+            if (! $token = Auth::attempt($credentials)) {
                 return Transformer::failed('Email or Password is wrong.', null, 401);
             }
-
-            Auth::user()->update([
-                'token' => $rememberToken,
-            ]);
 
             return Transformer::success(
                 'Success to authenticate user.',
@@ -110,10 +105,6 @@ class AuthController extends Controller
     public function logout()
     {
         try {
-            Auth::user()->update([
-                'token' => null
-            ]);
-            
             Auth::logout();
 
             return Transformer::success('Success to logout user.');
